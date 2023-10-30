@@ -1,3 +1,4 @@
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -83,8 +84,12 @@ class BeerScraper:
         url_list = url_text.split("/")
         beer_info["brewery_number"] = url_list[-3]
         beer_info["beer_number"] = url_list[-2]
-        beer_info["brewery_name"] = soup.select_one("h1").text.strip()
-        beer_info["beer_name"] = soup.select_one("h1 span").text.strip()
+        beer_info["brewery_name"] = soup.select_one("h1 span").text.strip()
+        beer_info["beer_name"] = (
+            soup.select_one("h1")
+            .text.strip()
+            .replace(beer_info["brewery_name"], "")
+        )
 
         stats = soup.select("dd.beerstats")
 
@@ -195,16 +200,47 @@ class BeerScraper:
         style = soup.select_one("#ba-content").find_next("div").text
         style_info["style_description"] = style.split("ABV")[0].strip()
         style_info["style_abv"] = re.search(
-            r"ABV: ([0-9\\.\-%]*)", style
+            r"ABV: ([0-9\\.\-–%]*)", style
         ).group(1)
         style_info["style_ibu"] = re.search(
-            r"IBU: ([0-9\\.\-]*)", style
+            r"IBU: ([0-9\\.\-–]*)", style
         ).group(1)
         style_info["style_glassware"] = re.search(
             r"Glassware: (.*)\n", style
         ).group(1)
 
         return style_info
+
+    def process_scrapped(
+        self, parsed_brewery, parsed_beer, parsed_comments, parsed_styles
+    ):
+        # pre-process scrapped_data
+        df_breweries = pd.DataFrame(parsed_brewery)
+        df_locations = df_breweries[
+            ["brewery_city", "brewery_country", "brewery_province"]
+        ].drop_duplicates()
+        df_locations["location_id"] = df_locations.index
+        df_breweries["brewery_location_id"] = df_breweries[
+            "brewery_city"
+        ].apply(
+            lambda name: df_locations.loc[
+                df_locations["brewery_city"] == name
+            ].index[0]
+        )
+        df_breweries = df_breweries.drop(
+            columns=["brewery_city", "brewery_country", "brewery_province"]
+        )
+
+        adjusted_brewery = df_breweries.to_dict(orient="records")
+        adjusted_location = df_locations.to_dict(orient="records")
+
+        return (
+            adjusted_brewery,
+            parsed_beer,
+            parsed_comments,
+            parsed_styles,
+            adjusted_location,
+        )
 
     def start_scraping(self):
         parsed_brewery, parsed_beer, parsed_comments = [], [], []
@@ -214,4 +250,6 @@ class BeerScraper:
             parsed_beer.extend(beer)
             parsed_comments.extend(comments)
         parsed_styles = self.parse_style_page()
-        return parsed_brewery, parsed_beer, parsed_comments, parsed_styles
+        return self.process_scrapped(
+            parsed_brewery, parsed_beer, parsed_comments, parsed_styles
+        )

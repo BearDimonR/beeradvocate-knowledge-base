@@ -1,5 +1,5 @@
-from neo4j.run import run_refresh_database
 from scrapper.run import run_scrapper
+from neo4j.run import run_refresh_database
 
 
 def main():

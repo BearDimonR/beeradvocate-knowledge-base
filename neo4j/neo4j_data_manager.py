@@ -28,10 +28,21 @@ class Neo4jDataManager:
             nodes.append(node)
         return nodes
 
-    def create_relationships(self, start_nodes, rel_type, end_nodes):
-        relationships = []
-        for start_node, end_node in zip(start_nodes, end_nodes):
-            relationship = Relationship(start_node, rel_type, end_node)
-            self.graph.create(relationship)
-            relationships.append(relationship)
-        return relationships
+    def create_relationships(
+        self,
+        start_nodes,
+        start_property_name,
+        end_nodes,
+        end_property_name,
+        rel_type,
+    ):
+        for start_node in start_nodes:
+            related_nodes = [
+                end_node
+                for end_node in end_nodes
+                if end_node[end_property_name]
+                == start_node[start_property_name]
+            ]
+
+            for node2 in related_nodes:
+                self.create_relationship(start_node, rel_type, node2)
