@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: my_neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+      - ./import:/var/lib/neo4j/import
+      - ./plugins:/var/lib/neo4j/plugins
+    env_file:
+      - .env
+
+  app:
+    build: .
+    volumes:
+      - ./scrapped_data:/scrapped_data
+    environment:
+      - $(cat .env | xargs)
+    depends_on:
+      - neo4j
+
