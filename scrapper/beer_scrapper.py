@@ -9,7 +9,7 @@ class BeerScraper:
     def __init__(self, cookies, pages=1):
         self.base_url = "https://www.beeradvocate.com"
         self.start_urls = [
-            f"{self.base_url}/place/list/?start={i * 20 + 500}&&sort=numbeers"
+            f"{self.base_url}/place/list/?start={i * 20 + 1000}&&sort=numbeers"
             for i in range(pages)
         ]
         self.style_url = f"{self.base_url}/beer/styles"

@@ -5,6 +5,10 @@ import pandas as pd
 from scrapper.beer_scrapper import BeerScraper
 from constants import COOKIES, FOLDER
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 def normalize(parsed_brewery):
     df_breweries = pd.DataFrame(parsed_brewery)
@@ -68,10 +72,12 @@ def process(location, brewery, beer, comment, style):
             "beer_added": "date_added",
             "beer_added_user": "creator",
             "beer_wants": "count_wants",
-            "beer_got": "count_got",
+            "beer_gots": "count_gots",
             "beer_description": "description",
         }
     )
+    df_beer["count_wants"] = df_beer["count_wants"].astype(int)
+    df_beer["count_gots"] = df_beer["count_gots"].astype(int)
     df_beer["abv"] = (
         df_beer["abv"]
         .replace("Not listed", np.nan)
@@ -80,7 +86,8 @@ def process(location, brewery, beer, comment, style):
     )
     df_beer["score"] = (
         df_beer["score"]
-        .replace(r"Needs more ratings", np.nan)
+        .replace("Needs more ratings", np.nan)
+        .astype(str)
         .str.replace("Ranked .+", "")
         .astype(float)
     )
@@ -144,13 +151,36 @@ def process(location, brewery, beer, comment, style):
 
 def classify(beer):
     df_beer = pd.DataFrame(beer)
-    df_beer["beer_wants"] = pd.cut(
-        df_beer["beer_wants"], bins=3, labels=["no", "yes", "trend"]
+    df_beer["count_wants"] = pd.cut(
+        df_beer["count_wants"], bins=3, labels=["no", "yes", "trend"]
     )
-    df_beer["beer_got"] = pd.cut(
-        df_beer["beer_got"], bins=3, labels=["no", "yes", "trend"]
+    df_beer["count_gots"] = pd.cut(
+        df_beer["count_gots"], bins=3, labels=["no", "yes", "trend"]
     )
     df_beer["has_description"] = df_beer["description"].isna()
+    df_beer["score"] = pd.cut(
+        df_beer["score"],
+        bins=7,
+        labels=[
+            "no",
+            "very small",
+            "small",
+            "medium",
+            "high",
+            "very high",
+            "best",
+        ],
+    )
+    df_beer["pdev"] = pd.cut(
+        df_beer["pdev"],
+        bins=4,
+        labels=[
+            "zero",
+            "small",
+            "medium",
+            "high",
+        ],
+    )
 
     adjusted_beer = df_beer.to_dict(orient="records")
 
@@ -160,7 +190,7 @@ def classify(beer):
 # run scrapper & transform
 def run_scrapper():
     # scrap
-    scraper = BeerScraper(cookies=COOKIES, pages=1)
+    scraper = BeerScraper(cookies=COOKIES, pages=2)
     brewery, beer, comment, style = scraper.start_scraping()
 
     # normalize
