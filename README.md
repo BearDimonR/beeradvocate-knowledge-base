@@ -3,6 +3,7 @@ A simple random tree classifier with scrapper logic and neo4j as storage engine
 
 
 ## Basic NEO4J QUERIES
+Link: http://localhost:7474/browser/
 
 Top beer locations
 ```cypher
