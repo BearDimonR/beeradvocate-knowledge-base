@@ -1,6 +1,11 @@
 # beeradvocate-knowledge-base
 A simple random tree classifier with scrapper logic and neo4j as storage engine
 
+## Scrapper data processing
+1. Split brewery with location (normalization)
+2. Filtered invalid values/parsed others ("noice" removal)
+3. Classified ... into ...
+
 
 ## Basic NEO4J QUERIES
 Link: http://localhost:7474/browser/
@@ -34,3 +39,5 @@ RETURN l.brewery_city AS City, l.brewery_country AS Country, l.brewery_province 
 ORDER BY numComments DESC
 LIMIT 5
 ```
+
+### Building expert rule-based model

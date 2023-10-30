@@ -8,11 +8,11 @@ from neo4j.neo4j_data_manager import Neo4jDataManager
 
 # refresh neo4j database
 def run_refresh_database():
-    df_locations = pd.read_csv(os.path.join(FOLDER, "location.csv"))
-    df_breweries = pd.read_csv(os.path.join(FOLDER, "brewery.csv"))
-    df_beers = pd.read_csv(os.path.join(FOLDER, "beer.csv"))
-    df_comments = pd.read_csv(os.path.join(FOLDER, "comment.csv"))
-    df_styles = pd.read_csv(os.path.join(FOLDER, "style.csv"))
+    df_locations = pd.read_csv(os.path.join(FOLDER, "location.csv"), thousands=",")
+    df_breweries = pd.read_csv(os.path.join(FOLDER, "brewery.csv"), thousands=",")
+    df_beers = pd.read_csv(os.path.join(FOLDER, "beer.csv"), thousands=",")
+    df_comments = pd.read_csv(os.path.join(FOLDER, "comment.csv"), thousands=",")
+    df_styles = pd.read_csv(os.path.join(FOLDER, "style.csv"), thousands=",")
 
     # make arrays
     locations = df_locations.to_dict(orient="records")
@@ -31,27 +31,7 @@ def run_refresh_database():
     style_nodes = data_manager.create_nodes("Style", styles)
     comment_nodes = data_manager.create_nodes("Comment", comments)
 
-    data_manager.create_relationships(
-        brewery_nodes,
-        "brewery_location_id",
-        location_nodes,
-        "location_id",
-        "LOCATES",
-    )
-    data_manager.create_relationships(
-        brewery_nodes,
-        "brewery_number",
-        beer_nodes,
-        "brewery_number",
-        "PRODUCES",
-    )
-    data_manager.create_relationships(
-        beer_nodes, "beer_style", style_nodes, "style_name", "HAS_STYLE"
-    )
-    data_manager.create_relationships(
-        beer_nodes,
-        "beer_number",
-        comment_nodes,
-        "comment_beer_number",
-        "HAS_COMMENT",
-    )
+    data_manager.create_relationships(brewery_nodes, "brewery_location_id", location_nodes, "location_id", "LOCATES")
+    data_manager.create_relationships(brewery_nodes, "brewery_number", beer_nodes, "brewery_number", "PRODUCES")
+    data_manager.create_relationships(beer_nodes, "beer_style", style_nodes, "style_name", "HAS_STYLE")
+    data_manager.create_relationships(beer_nodes, "beer_number", comment_nodes, "comment_beer_number", "HAS_COMMENT")
