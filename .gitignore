@@ -161,3 +161,5 @@ cython_debug/
 
 # Scrapper
 scrapped_data/
+# Neo4j
+data/
