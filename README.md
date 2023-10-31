@@ -41,3 +41,6 @@ LIMIT 5
 ```
 
 ### Building expert rule-based model
+
+We build a random forest classifier to classify 10 bins of beer score.
+Also, we visualized trees to make logic clear and made a simple demo
