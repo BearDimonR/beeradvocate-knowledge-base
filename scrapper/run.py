@@ -63,6 +63,7 @@ def process(location, brewery, beer, comment, style):
             "brewery_name": "brewery_name",
             "beer_style": "style_id",
             "beer_abv": "abv",
+            "beer_avg": "avg",
             "beer_score": "score",
             "beer_pDev": "pdev",
             "beer_reviews": "count_reviews",
@@ -76,8 +77,6 @@ def process(location, brewery, beer, comment, style):
             "beer_description": "description",
         }
     )
-    df_beer["count_wants"] = df_beer["count_wants"].astype(int)
-    df_beer["count_gots"] = df_beer["count_gots"].astype(int)
     df_beer["abv"] = (
         df_beer["abv"]
         .replace("Not listed", np.nan)
@@ -152,34 +151,21 @@ def process(location, brewery, beer, comment, style):
 def classify(beer):
     df_beer = pd.DataFrame(beer)
     df_beer["count_wants"] = pd.cut(
-        df_beer["count_wants"], bins=3, labels=["no", "yes", "trend"]
+        df_beer["count_wants"],
+        bins=10,
     )
     df_beer["count_gots"] = pd.cut(
-        df_beer["count_gots"], bins=3, labels=["no", "yes", "trend"]
+        df_beer["count_gots"],
+        bins=10,
     )
     df_beer["has_description"] = df_beer["description"].isna()
     df_beer["score"] = pd.cut(
         df_beer["score"],
-        bins=7,
-        labels=[
-            "no",
-            "very small",
-            "small",
-            "medium",
-            "high",
-            "very high",
-            "best",
-        ],
+        bins=10
     )
     df_beer["pdev"] = pd.cut(
         df_beer["pdev"],
-        bins=4,
-        labels=[
-            "zero",
-            "small",
-            "medium",
-            "high",
-        ],
+        bins=10,
     )
 
     adjusted_beer = df_beer.to_dict(orient="records")
@@ -190,17 +176,27 @@ def classify(beer):
 # run scrapper & transform
 def run_scrapper():
     # scrap
-    scraper = BeerScraper(cookies=COOKIES, pages=2)
+    scraper = BeerScraper(cookies=COOKIES, pages=20)
     brewery, beer, comment, style = scraper.start_scraping()
 
     # normalize
     brewery, location = normalize(brewery)
 
+    # export raw
+    pd.DataFrame(brewery).to_csv(os.path.join(FOLDER, "brewery_raw.csv"))
+    pd.DataFrame(beer).to_csv(os.path.join(FOLDER, "beer_raw.csv"))
+    pd.DataFrame(comment).to_csv(os.path.join(FOLDER, "comment_raw.csv"))
+    pd.DataFrame(style).to_csv(os.path.join(FOLDER, "style_raw.csv"))
+    pd.DataFrame(location).to_csv(os.path.join(FOLDER, "location_raw.csv"))
+
     # process
     location, brewery, beer, comment, style = process(
-        location, brewery, beer, comment, style
+        location=pd.read_csv(os.path.join(FOLDER, "location_raw.csv"), thousands=",").to_dict(orient="records"),
+        brewery=pd.read_csv(os.path.join(FOLDER, "brewery_raw.csv"), thousands=",").to_dict(orient="records"),
+        beer=pd.read_csv(os.path.join(FOLDER, "beer_raw.csv"), thousands=",").to_dict(orient="records"),
+        comment=pd.read_csv(os.path.join(FOLDER, "comment_raw.csv"), thousands=",").to_dict(orient="records"),
+        style=pd.read_csv(os.path.join(FOLDER, "style_raw.csv"), thousands=",").to_dict(orient="records"),
     )
-
     # classify
     beer = classify(beer)
 

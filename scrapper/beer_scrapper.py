@@ -9,7 +9,7 @@ class BeerScraper:
     def __init__(self, cookies, pages=1):
         self.base_url = "https://www.beeradvocate.com"
         self.start_urls = [
-            f"{self.base_url}/place/list/?start={i * 20 + 1000}&&sort=numbeers"
+            f"{self.base_url}/place/list/?start={i * 20}&&sort=numbeers"
             for i in range(pages)
         ]
         self.style_url = f"{self.base_url}/beer/styles"
@@ -58,6 +58,9 @@ class BeerScraper:
         if location[3] == "map":
             brewery_info["brewery_country"] = location[2]
             brewery_info["brewery_province"] = location[1]
+        if location[1] == "map":
+            brewery_info["brewery_country"] = location[0]
+            brewery_info["brewery_city"] = None
 
         beer_info = []
         comments_info = []
@@ -69,6 +72,7 @@ class BeerScraper:
                 if el.get("href").startswith("/beer/profile")
             ],
             desc="Beers",
+            position=0
         ):
             beer, comments = self.parse_beer(f"{self.base_url}{beer_url}")
             beer_info.append(beer)
